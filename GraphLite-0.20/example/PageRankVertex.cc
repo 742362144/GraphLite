@@ -262,15 +262,15 @@ public:
 		OutEdgeIterator eit = getOutEdgeIterator();
 		for (; !eit.done(); eit.next()) {
 			MyMsg m;
-			m.neighbor = eit->target();
+			m.neighbor = eit.target();
 			m.type = OUT_NEIGHBOR;
 			m.vid = getVertexId();
 			sendMessageToAllNeighbors(m);
 		}
 		// 对out遍历，取出所有的vid
-		for (set<int64_t>::iterator* it = vids.begin(); it != vids.end(); it++) {
+		for (set<int64_t>::iterator it = vids.begin(); it != vids.end(); it++) {
 			MyMsg m;
-			m.neighbor = *(int64_t *)it;
+			m.neighbor = *it;
 			m.type = IN_NEIGHBOR;
 			m.vid = getVertexId();
 			sendMessageToAllNeighbors(m);
