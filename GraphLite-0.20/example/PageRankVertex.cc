@@ -170,7 +170,7 @@ public:
 	// out A检测不出来，B和C可以检测出来，交给其他节点使用
 	// through A可以检测出来
 	// cycle A自身可以检测出来
-    void compute(MessageIterator* pmsgs) {
+	void compute(MessageIterator* pmsgs) {
 		map<int64_t, set<int64_t> > in;
 		map<int64_t, set<int64_t> > out;
 		set<int64_t> in_neighbors;
@@ -255,7 +255,7 @@ public:
 		mutableValue()->out = counter.out;
 		mutableValue()->through = counter.through;
 		mutableValue()->cycle = counter.cycle;
-		
+
 		// send msg to all outEdge
 		OutEdgeIterator eit = getOutEdgeIterator();
 		for (; !eit->done(); eit->next()) {
@@ -273,6 +273,7 @@ public:
 			m.vid = getVertexId();
 			sendMessageToAllNeighbors(m);
 		}
+	}
 };
 
 class VERTEX_CLASS_NAME(Graph): public Graph {
