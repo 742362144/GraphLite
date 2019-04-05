@@ -262,7 +262,7 @@ public:
 			m.neighbor = eit.target();
 			m.type = OUT_NEIGHBOR;
 			m.vid = getVertexId();
-			sendMessageToAllNeighbors(m);
+			//sendMessageToAllNeighbors(m);
 		}
 		// 对out遍历，取出所有的vid
 		for (set<int64_t>::iterator it = vids.begin(); it != vids.end(); it++) {
@@ -270,7 +270,7 @@ public:
 			m.neighbor = *it;
 			m.type = IN_NEIGHBOR;
 			m.vid = getVertexId();
-			sendMessageToAllNeighbors(m);
+			//sendMessageToAllNeighbors(m);
 		}
 	}
 };
