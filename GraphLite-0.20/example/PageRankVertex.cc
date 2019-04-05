@@ -151,20 +151,23 @@ public:
         } else {
             if (getSuperstep() >= 2) {
                 double global_val = * (double *)getAggrGlobal(0);
+				// 总体误差小于EPS时推出
                 if (global_val < EPS) {
                     voteToHalt(); return;
                 }
             }
-
+			// 求和R'v / Lv
             double sum = 0;
             for ( ; ! pmsgs->done(); pmsgs->next() ) {
                 sum += pmsgs->getValue();
             }
             val = 0.15 + 0.85 * sum;
 
+			// 误差累积
             double acc = fabs(getValue() - val);
             accumulateAggr(0, &acc);
         }
+		// val就是本节点的rank，更新
         * mutableValue() = val;
         const int64_t n = getOutEdgeIterator().size();
         sendMessageToAllNeighbors(val / n);
