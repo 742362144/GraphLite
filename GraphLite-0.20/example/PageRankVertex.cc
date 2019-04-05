@@ -173,7 +173,6 @@ public:
 		set<int64_t> vids;
 		set<int64_t> in_neighbors;
 		Counter counter;
-
 		if (getSuperstep() == 0) {
 			counter.in = 0;
 			counter.out = 0;
@@ -185,7 +184,7 @@ public:
 				int64_t global_val = *(int64_t *)getAggrGlobal(0);
 				// 总体误差小于EPS时推出
 				// if (global_val == 0) {
-				if (getSuperstep() == 30) {	
+				if (getSuperstep() == 10) {	
 					voteToHalt(); return;
 				}
 			}
