@@ -173,6 +173,7 @@ public:
 	void compute(MessageIterator* pmsgs) {
 		map<int64_t, set<int64_t> > in;
 		map<int64_t, set<int64_t> > out;
+		set<int64_t> vids;
 		set<int64_t> in_neighbors;
 		Counter counter;
 		if (getSuperstep() == 0) {
@@ -195,6 +196,7 @@ public:
 				MyMsg* pm = (MyMsg*)pmsgs;
 				// 统计所有的in neighbors
 				in_neighbors.insert(pm->vid);
+				vids.insert(pm->vid);
 				if (pm->type == IN_NEIGHBOR) {
 					if (in.find(pm->vid) != in.end()) {
 						in[pm->vid].insert(pm->neighbor);
@@ -202,7 +204,7 @@ public:
 					else {
 						set<int64_t> ns;
 						ns.insert(pm->neighbor);
-						in.insert(pm->vid, ns);
+						in.insert(make_pair(pm->vid, ns));
 					}
 				}
 				else if (pm->type == OUT_NEIGHBOR) {
@@ -212,7 +214,7 @@ public:
 					else {
 						set<int64_t> ns;
 						ns.insert(pm->neighbor);
-						out.insert(pm->vid, ns);
+						out.insert(make_pair(pm->vid, ns));
 					}
 				}
 			}
@@ -233,11 +235,11 @@ public:
 					}
 				}
 				OutEdgeIterator eit = getOutEdgeIterator();
-				for (; !eit->done(); eit->next()) {
-					if (out[ai].find(eit->target()) != out[ai].end()) {  // C in-neigbor和自身有相同的出度    
+				for (; !eit.done(); eit.next()) {
+					if (out[ai].find(eit.target()) != out[ai].end()) {  // C in-neigbor和自身有相同的出度    
 						counter.through++;
 					}
-					else if (in[ai].find(eit->target()) != in[ai].end()) {  // D in-neighbor的入度等于自身的出度
+					else if (in[ai].find(eit.target()) != in[ai].end()) {  // D in-neighbor的入度等于自身的出度
 						counter.cycle++;
 					}
 				}
@@ -258,7 +260,7 @@ public:
 
 		// send msg to all outEdge
 		OutEdgeIterator eit = getOutEdgeIterator();
-		for (; !eit->done(); eit->next()) {
+		for (; !eit.done(); eit.next()) {
 			MyMsg m;
 			m.neighbor = eit->target();
 			m.type = OUT_NEIGHBOR;
@@ -266,9 +268,9 @@ public:
 			sendMessageToAllNeighbors(m);
 		}
 		// 对out遍历，取出所有的vid
-		for (map<int64_t, set<int64_t> >::iterator* it = out.begin(); ait != out.end(); it++) {
+		for (set<int64_t>::iterator* it = vids.begin(); it != vids.end(); it++) {
 			MyMsg m;
-			m.neighbor = it->first;
+			m.neighbor = *it;
 			m.type = IN_NEIGHBOR;
 			m.vid = getVertexId();
 			sendMessageToAllNeighbors(m);
