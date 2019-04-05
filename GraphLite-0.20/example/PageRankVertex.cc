@@ -173,7 +173,7 @@ public:
 		set<int64_t> vids;
 		set<int64_t> in_neighbors;
 		Counter counter;
-		printf("msgs size %d \n", pmsgs->getMSize());
+
 		if (getSuperstep() == 0) {
 			counter.in = 100;
 			counter.out = 100;
