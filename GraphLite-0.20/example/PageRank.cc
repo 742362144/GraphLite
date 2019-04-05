@@ -119,6 +119,8 @@ public:
 };
 
 // An aggregator that records a double value tom compute sum
+// Aggregator提供了一种全局通信、监控和数据查看的机制。
+//在一个超步S中，每一个顶点都可以向一个Aggregator提供一个数据，Pregel计算框架会对这些值进行聚合操作产生一个值，在下一个超步（S + 1）中，图中的所有顶点都可以看见这个值。
 class VERTEX_CLASS_NAME(Aggregator): public Aggregator<double> {
 public:
     void init() {
