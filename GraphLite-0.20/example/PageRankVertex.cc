@@ -175,10 +175,10 @@ public:
 		Counter counter;
 
 		if (getSuperstep() == 0) {
-			counter.in = 100;
-			counter.out = 100;
-			counter.through = 100;
-			counter.cycle = 100;
+			counter.in = 0;
+			counter.out = 0;
+			counter.through = 0;
+			counter.cycle = 0;
 		}
 		else {
 			if (getSuperstep() >= 2) {
