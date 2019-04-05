@@ -68,7 +68,7 @@ public:
 		return m_total_edge;
 	}
 	int getVertexValueSize() {
-		m_n_value_size = sizeof(double);
+		m_n_value_size = sizeof(Counter);
 		return m_n_value_size;
 	}
 	int getEdgeValueSize() {
@@ -76,7 +76,7 @@ public:
 		return m_e_value_size;
 	}
 	int getMessageValueSize() {
-		m_m_value_size = sizeof(double);
+		m_m_value_size = sizeof(MyMsg);
 		return m_m_value_size;
 	}
 	void loadGraph() {
@@ -125,12 +125,12 @@ class VERTEX_CLASS_NAME(OutputFormatter) : public OutputFormatter {
 public:
 	void writeResult() {
 		int64_t vid;
-		double value;
+		Counter value;
 		char s[1024];
 
 		for (ResultIterator r_iter; !r_iter.done(); r_iter.next()) {
 			r_iter.getIdValue(vid, &value);
-			int n = sprintf(s, "%lld: %f\n", (unsigned long long)vid, value);
+			int n = sprintf(s, "%lld: in %lld out %lld through %lld cycle %lld\n", (unsigned long long)vid, value.in, value.out, value.through, value.cycle);
 			writeNextResLine(s, n);
 		}
 	}
@@ -173,11 +173,13 @@ public:
 		set<int64_t> vids;
 		set<int64_t> in_neighbors;
 		Counter counter;
+		printf("msgs size %d \n", pmsgs->getMSize());
 		if (getSuperstep() == 0) {
 			counter.in = 100;
 			counter.out = 100;
 			counter.through = 100;
 			counter.cycle = 100;
+			printf("super step 0 \n");
 		}
 		else {
 			if (getSuperstep() >= 50) {
