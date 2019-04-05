@@ -256,7 +256,7 @@ public:
 		mutableValue()->cycle = counter.cycle;
 
 		// send msg to all outEdge
-		printf("%d %d %d %d\n", counter.in, counter.out, counter.through, counter.cycle);
+		printf("%lld %lld %lld %lld\n", counter.in, counter.out, counter.through, counter.cycle);
 		OutEdgeIterator eit = getOutEdgeIterator();
 		for (; !eit.done(); eit.next()) {
 			MyMsg m;
