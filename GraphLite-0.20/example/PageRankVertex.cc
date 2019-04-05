@@ -179,10 +179,9 @@ public:
 			counter.out = 100;
 			counter.through = 100;
 			counter.cycle = 100;
-			printf("super step 0 \n");
 		}
 		else {
-			if (getSuperstep() >= 50) {
+			if (getSuperstep() >= 2) {
 				int64_t global_val = *(int64_t *)getAggrGlobal(0);
 				// 总体误差小于EPS时推出
 				if (global_val == 0) {
@@ -252,13 +251,20 @@ public:
 			accumulateAggr(0, &acc);
 		}
 		// val就是本节点的rank，更新
-		mutableValue()->in = counter.in;
-		mutableValue()->out = counter.out;
-		mutableValue()->through = counter.through;
-		mutableValue()->cycle = counter.cycle;
+		if (mutableValue()->in < counter.in) {
+			mutableValue()->in = counter.in;
+		}
+		if (mutableValue()->out < counter.out) {
+			mutableValue()->out = counter.out;
+		}
+		if (mutableValue()->through < counter.through) {
+			mutableValue()->through = counter.through;
+		}
+		if (mutableValue()->cycle < counter.cycle) {
+			mutableValue()->cycle = counter.cycle;
+		}
 
 		// send msg to all outEdge
-		printf("%lld %lld %lld %lld\n", counter.in, counter.out, counter.through, counter.cycle);
 		OutEdgeIterator eit = getOutEdgeIterator();
 		for (; !eit.done(); eit.next()) {
 			MyMsg m;
