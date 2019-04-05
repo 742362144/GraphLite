@@ -171,6 +171,9 @@ public:
 	// through A可以检测出来
 	// cycle A自身可以检测出来
     void compute(MessageIterator* pmsgs) {
+		map<int64_t, set<int64_t> > in;
+		map<int64_t, set<int64_t> > out;
+		set<int64_t> in_neighbors;
 		Counter counter;
 		if (getSuperstep() == 0) {
 			counter.in = 0;
@@ -186,10 +189,6 @@ public:
 					voteToHalt(); return;
 				}
 			}
-			// 求和R'v / Lv
-			map<int64_t, set<int64_t> > in;
-			map<int64_t, set<int64_t> > out;
-			set<int64_t> in_neighbors;
 
 			// 遍历所有消息，获取已知的所有邻居的in-neighbor和out-neighbor
 			for (; !pmsgs->done(); pmsgs->next()) {
@@ -219,21 +218,21 @@ public:
 			}
 
 			for (set<int64_t>::iterator ait = in_neighbors.begin(); ait != in_neighbors.end(); ait++) {
-				int64_t ai = *((int64_t*)ait);
+				int64_t ai = *ait;
 				in_neighbors.erase(ait);
 				for (set<int64_t>::iterator bit = in_neighbors.begin(); bit != in_neighbors.end(); bit++) {
-					int64_t bi = *((int64_t*)bit);
+					int64_t bi = *bit;
 					// A，两个in-neighbor有通路 A包含了B，当出现A时增加B
 					if (out[ai].find(bi) != out[ai].end()) {
 						counter.in++;
-						count.out++;
+						counter.out++;
 					}
 					if (out[bi].find(ai) != out[bi].end()) {
 						counter.in++;
-						count.out++;
+						counter.out++;
 					}
 				}
-				OutEdgeIterator* eit = getOutEdgeIterator();
+				OutEdgeIterator eit = getOutEdgeIterator();
 				for (; !eit->done(); eit->next()) {
 					if (out[ai].find(eit->target()) != out[ai].end()) {  // C in-neigbor和自身有相同的出度    
 						counter.through++;
@@ -252,13 +251,13 @@ public:
 			accumulateAggr(0, &acc);
 		}
 		// val就是本节点的rank，更新
-		*mutableValue()->in = counter.in;
-		*mutableValue()->out = counter.out;
-		*mutableValue()->through = counter.through;
-		*mutableValue()->cycle = counter.cycle;
+		mutableValue()->in = counter.in;
+		mutableValue()->out = counter.out;
+		mutableValue()->through = counter.through;
+		mutableValue()->cycle = counter.cycle;
 		
 		// send msg to all outEdge
-		OutEdgeIterator* eit = getOutEdgeIterator();
+		OutEdgeIterator eit = getOutEdgeIterator();
 		for (; !eit->done(); eit->next()) {
 			MyMsg m;
 			m.neighbor = eit->target();

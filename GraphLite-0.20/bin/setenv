@@ -1,9 +1,9 @@
 #!/bin/bash
 
-export JAVA_HOME=/usr/local/java/jdk1.7.0_40
+export JAVA_HOME=/home/bdms/setup/jdk1.8.0_151
 
-export HADOOP_HOME=/home/chensm/java/hadoop-2.6.0
-export GRAPHLITE_HOME=/home/chensm/java/2016Q1-BDMS/graphlite/GraphLite-0.20
+export HADOOP_HOME=/home/bdms/setup/hadoop-2.9.2
+export GRAPHLITE_HOME=/home/bdms/GraphLite/GraphLite-0.20
 
 #export HADOOP_HOME=/usr/local/java/hadoop-2.6.0
 #export GRAPHLITE_HOME=/home/guest/work/hw2/GraphLite-0.20
