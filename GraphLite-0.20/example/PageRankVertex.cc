@@ -270,7 +270,7 @@ public:
 		// 对out遍历，取出所有的vid
 		for (set<int64_t>::iterator* it = vids.begin(); it != vids.end(); it++) {
 			MyMsg m;
-			m.neighbor = *it;
+			m.neighbor = *(int64_t *)it;
 			m.type = IN_NEIGHBOR;
 			m.vid = getVertexId();
 			sendMessageToAllNeighbors(m);
