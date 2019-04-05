@@ -180,7 +180,7 @@ public:
 			counter.cycle = 100;
 		}
 		else {
-			if (getSuperstep() >= 2) {
+			if (getSuperstep() >= 50) {
 				int64_t global_val = *(int64_t *)getAggrGlobal(0);
 				// 总体误差小于EPS时推出
 				if (global_val == 0) {
