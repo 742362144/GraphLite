@@ -256,13 +256,14 @@ public:
 		mutableValue()->cycle = counter.cycle;
 
 		// send msg to all outEdge
+		printf("%d %d %d %d\n", counter.in, counter.out, counter.through, counter.cycle);
 		OutEdgeIterator eit = getOutEdgeIterator();
 		for (; !eit.done(); eit.next()) {
 			MyMsg m;
 			m.neighbor = eit.target();
 			m.type = OUT_NEIGHBOR;
 			m.vid = getVertexId();
-			//sendMessageToAllNeighbors(m);
+			sendMessageToAllNeighbors(m);
 		}
 		// 对out遍历，取出所有的vid
 		for (set<int64_t>::iterator it = vids.begin(); it != vids.end(); it++) {
@@ -270,7 +271,7 @@ public:
 			m.neighbor = *it;
 			m.type = IN_NEIGHBOR;
 			m.vid = getVertexId();
-			//sendMessageToAllNeighbors(m);
+			sendMessageToAllNeighbors(m);
 		}
 	}
 };
