@@ -29,13 +29,29 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
+#include <set>
+#include <map>
 
 #include "GraphLite.h"
 
 #define VERTEX_CLASS_NAME(name) PageRankVertex##name
 
-#define EPS 1e-6
+#define IN_NEIGHBOR 1
+#define OUT_NEIGHBOR 2
 
+struct MyMsg {
+	int64_t vid;
+	int64_t neighbor;
+	int64_t type;  // 标记出度或者入度
+};
+struct Counter {
+	int64_t in = 0;
+	int64_t out = 0;
+	int64_t through = 0;
+	int64_t cycle = 0;
+};
+
+// 处理输入
 class VERTEX_CLASS_NAME(InputFormatter): public InputFormatter {
 public:
     int64_t getVertexNum() {
@@ -103,6 +119,7 @@ public:
     }
 };
 
+// 负责输出
 class VERTEX_CLASS_NAME(OutputFormatter): public OutputFormatter {
 public:
     void writeResult() {
@@ -119,59 +136,143 @@ public:
 };
 
 // An aggregator that records a double value tom compute sum
-class VERTEX_CLASS_NAME(Aggregator): public Aggregator<double> {
+class VERTEX_CLASS_NAME(Aggregator): public Aggregator<int64_t> {
 public:
     void init() {
-        m_global = 0;
-        m_local = 0;
+		m_global = 0;
+
+		m_local = 0;
     }
     void* getGlobal() {
         return &m_global;
     }
     void setGlobal(const void* p) {
-        m_global = * (double *)p;
+        m_global = * (int64_t *)p;
     }
     void* getLocal() {
         return &m_local;
     }
     void merge(const void* p) {
-        m_global += * (double *)p;
+		m_global += *(int64_t *)p;
     }
+	// TODO
     void accumulate(const void* p) {
-        m_local += * (double *)p;
+		m_local += *(int64_t *)p;
     }
 };
-
-class VERTEX_CLASS_NAME(): public Vertex <double, double, double> {
+// 顶点值Counter
+// 边值为double
+// 消息值为MyMsg
+class VERTEX_CLASS_NAME(): public Vertex <Counter, double, MyMsg> {
 public:
+	// TODO
+	// in A自身都可以检测出来
+	// out A检测不出来，B和C可以检测出来，交给其他节点使用
+	// through A可以检测出来
+	// cycle A自身可以检测出来
     void compute(MessageIterator* pmsgs) {
-        double val;
-        if (getSuperstep() == 0) {
-           val= 1.0;
-        } else {
-            if (getSuperstep() >= 2) {
-                double global_val = * (double *)getAggrGlobal(0);
+		map<int64_t, set<int64_t> > in;
+		map<int64_t, set<int64_t> > out;
+		set<int64_t> in_neighbors;
+		Counter counter;
+		if (getSuperstep() == 0) {
+			counter.in = 0;
+			counter.out = 0;
+			counter.through = 0;
+			counter.cycle = 0;
+		}
+		else {
+			if (getSuperstep() >= 2) {
+				int64_t global_val = *(int64_t *)getAggrGlobal(0);
 				// 总体误差小于EPS时推出
-                if (global_val < EPS) {
-                    voteToHalt(); return;
-                }
-            }
-			// 求和R'v / Lv
-            double sum = 0;
-            for ( ; ! pmsgs->done(); pmsgs->next() ) {
-                sum += pmsgs->getValue();
-            }
-            val = 0.15 + 0.85 * sum;
+				if (global_val == 0) {
+					voteToHalt(); return;
+				}
+			}
+
+			// 遍历所有消息，获取已知的所有邻居的in-neighbor和out-neighbor
+			for (; !pmsgs->done(); pmsgs->next()) {
+				MyMsg* pm = (MyMsg*)pmsgs;
+				// 统计所有的in neighbors
+				in_neighbors.insert(pm->vid);
+				if (pm->type == IN_NEIGHBOR) {
+					if (in.find(pm->vid) != in.end()) {
+						in[pm->vid].insert(pm->neighbor);
+					}
+					else {
+						set<int64_t> ns;
+						ns.insert(pm->neighbor);
+						in.insert(pm->vid, ns);
+					}
+				}
+				else if (pm->type == OUT_NEIGHBOR) {
+					if (out.find(pm->vid) != out.end()) {
+						out[pm->vid].insert(pm->neighbor);
+					}
+					else {
+						set<int64_t> ns;
+						ns.insert(pm->neighbor);
+						out.insert(pm->vid, ns);
+					}
+				}
+			}
+
+			for (set<int64_t>::iterator ait = in_neighbors.begin(); ait != in_neighbors.end(); ait++) {
+				int64_t ai = *ait;
+				in_neighbors.erase(ait);
+				for (set<int64_t>::iterator bit = in_neighbors.begin(); bit != in_neighbors.end(); bit++) {
+					int64_t bi = *bit;
+					// A，两个in-neighbor有通路 A包含了B，当出现A时增加B
+					if (out[ai].find(bi) != out[ai].end()) {
+						counter.in++;
+						counter.out++;
+					}
+					if (out[bi].find(ai) != out[bi].end()) {
+						counter.in++;
+						counter.out++;
+					}
+				}
+				OutEdgeIterator eit = getOutEdgeIterator();
+				for (; !eit->done(); eit->next()) {
+					if (out[ai].find(eit->target()) != out[ai].end()) {  // C in-neigbor和自身有相同的出度    
+						counter.through++;
+					}
+					else if (in[ai].find(eit->target()) != in[ai].end()) {  // D in-neighbor的入度等于自身的出度
+						counter.cycle++;
+					}
+				}
+			}
 
 			// 误差累积
-            double acc = fabs(getValue() - val);
-            accumulateAggr(0, &acc);
-        }
+			int64_t acc = abs(getValue().in - counter.in)
+				+ abs(getValue().out - counter.out)
+				+ abs(getValue().through - counter.through)
+				+ abs(getValue().cycle - counter.cycle);
+			accumulateAggr(0, &acc);
+		}
 		// val就是本节点的rank，更新
-        * mutableValue() = val;
-        const int64_t n = getOutEdgeIterator().size();
-        sendMessageToAllNeighbors(val / n);
-    }
+		mutableValue()->in = counter.in;
+		mutableValue()->out = counter.out;
+		mutableValue()->through = counter.through;
+		mutableValue()->cycle = counter.cycle;
+		
+		// send msg to all outEdge
+		OutEdgeIterator eit = getOutEdgeIterator();
+		for (; !eit->done(); eit->next()) {
+			MyMsg m;
+			m.neighbor = eit->target();
+			m.type = OUT_NEIGHBOR;
+			m.vid = getVertexId();
+			sendMessageToAllNeighbors(m);
+		}
+		// 对out遍历，取出所有的vid
+		for (map<int64_t, set<int64_t> >::iterator* it = out.begin(); ait != out.end(); it++) {
+			MyMsg m;
+			m.neighbor = it->first;
+			m.type = IN_NEIGHBOR;
+			m.vid = getVertexId();
+			sendMessageToAllNeighbors(m);
+		}
 };
 
 class VERTEX_CLASS_NAME(Graph): public Graph {
@@ -208,6 +309,7 @@ public:
         delete[] aggregator;
     }
 };
+
 
 /* STOP: do not change the code below. */
 extern "C" Graph* create_graph() {
