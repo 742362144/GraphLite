@@ -156,7 +156,7 @@ public:
 		m_global += *(int64_t *)p;
 	}
 	void accumulate(const void* p) {
-		m_local += *(int64_t *)p;
+		m_local = *(int64_t *)p;
 	}
 };
 
@@ -183,8 +183,8 @@ public:
 			if (getSuperstep() >= 2) {
 				int64_t global_val = *(int64_t *)getAggrGlobal(0);
 				// 总体误差小于EPS时推出
-				// if (global_val == 0) {
-				if (getSuperstep() == 10) {	
+				if (global_val == 0) {
+					// if (getSuperstep() == 10) {	
 					voteToHalt(); return;
 				}
 			}
